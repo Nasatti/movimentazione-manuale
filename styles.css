@@ -5,13 +5,13 @@ body{
     line-height: 1.5;
     height: 100%;
 }
-form{
+.form{
     display: flex;
     flex-direction: column;
     width: 350px;
     padding: 40px;
 }
-input[type=text],[type=date],[type=email],[type=password]{
+.form input[type=text],[type=date],[type=email],[type=password]{
     width: 100%;
     margin: 8px 0;
     display: inline-block;
@@ -24,7 +24,7 @@ input[type=text],[type=date],[type=email],[type=password]{
     padding-top: 12px;
     padding-bottom: 12px;
 }
-input[type=submit]{
+.form input[type=submit]{
     width: 100%;
     color:white;
     padding: 14px 20px;
@@ -91,4 +91,20 @@ h1{
 }
 .right{
     float:right;
+}
+.body{
+    position: absolute;
+    top: 175px;
+}
+table{
+    width: 100%;
+}
+td, th{
+    width: 7.69%;
+}
+.form_create{
+    display: flex;
+    flex-direction: column;
+    text-align:center;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }

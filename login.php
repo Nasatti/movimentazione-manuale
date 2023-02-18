@@ -16,7 +16,7 @@ session_start();
             <h1 class="text-center">Login</h1>
         </div>
         <div class=center_form>
-            <form method='POST' action='login.php'>
+            <form method='POST' class="form" action='login.php'>
                 <input type='text' name='us' placeholder='username' required >
                 <input type='password' name='psw' placeholder='password' required>
                 <input type='submit' class="btn btn-primary" value='Sign in'>
@@ -31,7 +31,7 @@ session_start();
             $response = $connection->query($sql);
             if ($response->num_rows > 0) {
                 $data = $response->fetch_array();
-                $_SESSION['id']=$data['id'];
+                $_SESSION['id_utente']=$data['id'];
                 $_SESSION['nome']=$data['nome'];
                 $_SESSION['cognome']=$data['cognome'];
                 $_SESSION['username']=$data['username'];
