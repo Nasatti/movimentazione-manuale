@@ -45,7 +45,10 @@ session_start();
         }
         if(isset($_GET['error'])){
             if ($_GET['error'] == 'credenziali') {
-                echo '<div class="alert alert-danger" role="alert">Login incoretto!</div>';
+                echo '<div class="alert alert-danger" role="alert">Credenziali sbagliate!</div>';
+            }
+            elseif($_GET['error'] == 'accesso') {
+                echo "<div class='alert alert-danger' role='alert'>Eseguire l'accesso!</div>";
             }
         }
         

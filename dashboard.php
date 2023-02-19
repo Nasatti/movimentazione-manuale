@@ -1,8 +1,8 @@
 <?php 
 session_start();
-if($_SESSION['ruolo']!="1") header("Location: user.php");
+include("connection.php");
+if(!isset($_SESSION['username'])) header("Location: login.php?error=accesso");
 if(isset($_POST['nome'])){
-  include("connection.php");
   if($_SESSION['ruolo']=="Lettura") $ruolo=0;
   else $ruolo=1;
   $sql = "INSERT INTO credenziali (nome, cognome, username, password, ruolo) VALUES ('".$_POST['nome']."','".$_POST['cognome']."','".$_POST['username']."','".hash("sha512",$_POST['password'],false)."','".$ruolo."')";
@@ -11,7 +11,7 @@ if(isset($_POST['nome'])){
 }
 if(isset($_POST['cliente'])){
   $ps=$_POST['peso']/$_POST['peso_max'];
-  $sql = "INSERT INTO valutazione (id_operatore, cliente, data, h_terra, dist_verticale, dist_orizzontale, disl_angolare, giudizio, peso, frequenza, prezzo, peso_max, sollevamento) VALUES ('".$_SESSION['id_utente']."','".$_POST['cliente']."','".$_POST['data']."','".$_POST['h_terra']."','".$_POST['dist_verticale']."','".$_POST['dist_orizzontale']."','".$_POST['disl_angolare']."','".$_POST['giudizio']."','".$_POST['peso']."','".$_POST['frequenza']."','".$_POST['prezzo']."','".$_POST['peso_max']."','".$ps."')";
+  $sql = "INSERT INTO valutazione (id_operatore, cliente, data, h_terra, dist_verticale, dist_orizzontale, disl_angolare, giudizio, peso, frequenza, prezzo, peso_max, idx_sollevamento) VALUES ('".$_SESSION['id_utente']."','".$_POST['cliente']."','".$_POST['data']."','".$_POST['h_terra']."','".$_POST['dist_verticale']."','".$_POST['dist_orizzontale']."','".$_POST['disl_angolare']."','".$_POST['giudizio']."','".$_POST['peso']."','".$_POST['frequenza']."','".$_POST['prezzo']."','".$_POST['peso_max']."','".$ps."')";
   if ($connection->query($sql)) echo "<script>alert('valutazione aggiunto!')</script>";
   else echo "<script>alert('Operazione non riuscita!')</script>";
 }
@@ -24,7 +24,7 @@ if(isset($_POST['cliente'])){
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="styles.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <title>Admin</title>
+        <title>Dashboard</title>
     </head>
     <body>
         <div class="p-3 mb-2 bg-primary text-white">
@@ -57,32 +57,63 @@ if(isset($_POST['cliente'])){
               </div>
             </div>
             <div class="right">
-                <button id="view" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_user">Aggiungi utente</button>
-                <button id="create" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#create_modal">Nuova valutazione</button>
+                <?php 
+                if($_SESSION['ruolo'] =="1"){
+                  echo '<button id="view" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_user">Aggiungi utente</button>
+                  <button id="create" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#create_modal">Nuova valutazione</button>';
+                }
+                ?>
                 <a href="index.php"><button type="button" class="btn btn-outline-danger">Logout</button></a>
             </div>
             <div class="body">
               <div id="div_view">
-                <table class="table-bordered border-primary text-center">
+                <table class="table-bordered border-dark text-center">
                   <tr>
-                    <th class="border-primary">ID</th>
-                    <th class="border-primary">Ragione sociale</th>
-                    <th class="border-primary">Data</th>
-                    <th class="border-primary">Peso realmente sollevato</th>
-                    <th class="border-primary">Altezza da terra delle mani</th>
-                    <th class="border-primary">Distanza verticale di spostamento</th>
-                    <th class="border-primary">Distanza orizzontale</th>
-                    <th class="border-primary">Dislocazione angolare</th>
-                    <th class="border-primary">Giudizio</th>
-                    <th class="border-primary">Peso massimo consentito</th>
-                    <th class="border-primary">Indice sollevamento</th>
-                    <th class="border-primary">Frequenza gesti</th>
-                    <th class="border-primary">Prezzo</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">ID</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Ragione sociale</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Data</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso realmente sollevato</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Altezza da terra delle mani</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Distanza verticale di spostamento</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Distanza orizzontale</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Dislocazione angolare</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Giudizio</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso massimo consentito</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Indice sollevamento</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Frequenza gesti</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Prezzo</th>
                   </tr>
                     <?php
-                    //mostra valutazioni 
+                    $sql="SELECT `id`, `id_operatore`, `cliente`, `data`, `h_terra`, `dist_verticale`, `dist_orizzontale`, `disl_angolare`, `giudizio`, `peso`, `frequenza`, `prezzo`, `idx_sollevamento`, `peso_max` FROM `valutazione`";
+                    $result = $connection->query($sql);
+                        if($result->num_rows >0){
+                          $array = [];
+                            while($row = $result->fetch_assoc()){
+                                if(!in_array($row, $array)){
+                                    array_push($array, $row);
+                                    
+                                }
+                            }
+                            foreach($array as $ar){
+                              echo "<tr>";
+                              echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['h_terra'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['dist_verticale'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['dist_orizzontale'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['disl_angolare'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['giudizio'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['idx_sollevamento'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['frequenza'].'</td>';
+                              echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                              echo "</tr>";
+                          }
+                        }
                     ?>
-                  </tr>
+                  
                 </table>
               </div>
               <div class="div_create">
@@ -202,4 +233,3 @@ if(isset($_POST['cliente'])){
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     </body>
 </html>
-
