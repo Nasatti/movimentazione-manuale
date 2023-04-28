@@ -1,23 +1,58 @@
 <?php 
 session_start();
-session_destroy(); 
 ?>
 <!DOCTYPE html>
 <html>
     <head>
-    <meta charset="UTF-8">
+        <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="styles.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <script src="script.js"></script>
-        <title>MMC</title>
+        <title>Login</title>
     </head>
     <body>
-        <div class="p-3 mb-2 bg-primary text-white">
+    <div class="p-3 mb-2 bg-primary text-white">
             <h1 class="text-center">Movimentazione Manuale dei Carichi</h1>
         </div>
-        <div style="text-align:center">
-            <a href="login.php"><button type="button"  class="btn btn-primary">Login</button></a>
-        </div>
+        <div class=center_form>
+            <form method='POST' class="form" action='index.php'>
+                <h1>Login</h1>
+                <input type='text' name='us' placeholder='username' required >
+                <input type='password' name='psw' placeholder='password' required>
+                <input type='submit' class="btn btn-primary" value='Sign in'>
+            </form>
+        <?php
+        include("connection.php");
+
+        if(isset($_POST['us']) and isset($_POST['psw'])){
+            $usern = $_POST['us'];
+            $password = $_POST['psw'];
+            $sql = 'SELECT * FROM credenziali WHERE username="'.$usern.'" AND password="'.hash("sha512",$password,false).'";';
+            $response = $connection->query($sql);
+            if ($response->num_rows > 0) {
+                $data = $response->fetch_array();
+                $_SESSION['id_utente']=$data['id'];
+                $_SESSION['nome']=$data['nome'];
+                $_SESSION['cognome']=$data['cognome'];
+                $_SESSION['username']=$data['username'];
+                $_SESSION['password']=$data['password'];
+                $_SESSION['ruolo']=$data['ruolo'];
+                header('Location: dashboard.php');
+            }
+            else {
+                header('Location: index.php?error=credenziali');
+            }
+        }
+        if(isset($_GET['error'])){
+            if ($_GET['error'] == 'credenziali') {
+                echo '<div class="alert alert-danger" role="alert">Credenziali sbagliate!</div>';
+            }
+            elseif($_GET['error'] == 'accesso') {
+                echo "<div class='alert alert-danger' role='alert'>Eseguire l'accesso!</div>";
+            }
+        }
+        
+        ?>
     </body>
 </html>

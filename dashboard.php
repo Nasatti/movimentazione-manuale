@@ -1,21 +1,19 @@
 <?php 
 session_start();
 include("connection.php");
-if(!isset($_SESSION['username'])) header("Location: login.php?error=accesso");
+if(!isset($_SESSION['username'])) header("Location: index.php?error=accesso");
 if(isset($_POST['nome'])){
-  if($_SESSION['ruolo']=="Lettura") $ruolo=0;
+  if($_POST['ruolo_ut']=="Lettura") $ruolo=0;
   else $ruolo=1;
   $sql = "INSERT INTO credenziali (nome, cognome, username, password, ruolo) VALUES ('".$_POST['nome']."','".$_POST['cognome']."','".$_POST['username']."','".hash("sha512",$_POST['password'],false)."','".$ruolo."')";
   if ($connection->query($sql)) echo "<script>alert('Utente aggiunto!')</script>";
   else echo "<script>alert('Operazione non riuscita!')</script>";
 }
-if(isset($_POST['cliente'])){
-  $ps=$_POST['peso']/$_POST['peso_max'];
-  $sql = "INSERT INTO valutazione (id_operatore, cliente, data, h_terra, dist_verticale, dist_orizzontale, disl_angolare, giudizio, peso, frequenza, prezzo, peso_max, idx_sollevamento) VALUES ('".$_SESSION['id_utente']."','".$_POST['cliente']."','".$_POST['data']."','".$_POST['h_terra']."','".$_POST['dist_verticale']."','".$_POST['dist_orizzontale']."','".$_POST['disl_angolare']."','".$_POST['giudizio']."','".$_POST['peso']."','".$_POST['frequenza']."','".$_POST['prezzo']."','".$_POST['peso_max']."','".$ps."')";
-  if ($connection->query($sql)) echo "<script>alert('valutazione aggiunto!')</script>";
-  else echo "<script>alert('Operazione non riuscita!')</script>";
+if(isset($_POST['cliente'])){ 
+  require("add_valutazione.php");
 }
 ?>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -45,7 +43,7 @@ if(isset($_POST['cliente'])){
                           echo "<h6>Nome: ".$_SESSION["nome"]."</h6>";
                           echo "<h6>Cogome: ".$_SESSION["cognome"]."</h6>";
                           echo "<h6>Username: ".$_SESSION["username"]."</h6>";
-                          if($_SESSION['ruolo'] == 1) echo "<h6>Ruolo: Lettura e Scrittura</h6>";
+                          if($_SESSION['ruolo'] == 1 || $_SESSION['ruolo'] == 2) echo "<h6>Ruolo: Lettura e Scrittura</h6>";
                           else echo "<h6>Ruolo: Lettura e Scrittura</h6>";
                       ?>
                     </div>
@@ -58,58 +56,103 @@ if(isset($_POST['cliente'])){
             </div>
             <div class="right">
                 <?php 
-                if($_SESSION['ruolo'] =="1"){
-                  echo '<button id="view" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_user">Aggiungi utente</button>
-                  <button id="create" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#create_modal">Nuova valutazione</button>';
+                if($_SESSION['ruolo'] =="1" || $_SESSION['ruolo'] =="2"){
+                  if($_SESSION['ruolo'] =="2")echo '<button id="view" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_user">Aggiungi utente</button>';
+                  echo '<button id="create" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#create_modal">Nuova valutazione</button>';
                 }
                 ?>
                 <a href="index.php"><button type="button" class="btn btn-outline-danger">Logout</button></a>
             </div>
             <div class="body">
               <div id="div_view">
-                <table class="table-bordered border-dark text-center">
+                <table class="table-bordered border-dark text-center" style="width:100%">
                   <tr>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">ID</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Autore</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Ragione sociale</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Data</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso realmente sollevato</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Altezza da terra delle mani</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Distanza verticale di spostamento</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Distanza orizzontale</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Dislocazione angolare</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Giudizio</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso massimo consentito</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso limite raccomandato</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Indice sollevamento</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Frequenza gesti</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Prezzo</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">PDF</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Validità</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Modifica</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Elimina</th>
+
                   </tr>
                     <?php
-                    $sql="SELECT `id`, `id_operatore`, `cliente`, `data`, `h_terra`, `dist_verticale`, `dist_orizzontale`, `disl_angolare`, `giudizio`, `peso`, `frequenza`, `prezzo`, `idx_sollevamento`, `peso_max` FROM `valutazione`";
+                    $sql = "SELECT id, id_operatore, cliente, data, peso, prezzo, idx_sollevamento, peso_max, valido FROM valutazione";
                     $result = $connection->query($sql);
                         if($result->num_rows >0){
                           $array = [];
                             while($row = $result->fetch_assoc()){
                                 if(!in_array($row, $array)){
                                     array_push($array, $row);
-                                    
                                 }
                             }
                             foreach($array as $ar){
-                              echo "<tr>";
-                              echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['h_terra'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['dist_verticale'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['dist_orizzontale'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['disl_angolare'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['giudizio'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['idx_sollevamento'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['frequenza'].'</td>';
-                              echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
-                              echo "</tr>";
+                              $sql="SELECT `username` FROM `credenziali` WHERE `id` = ".$ar['id_operatore'];
+                              $result = $connection->query($sql);
+                              if($result->num_rows >0){
+                                $data = $result->fetch_array();
+                                  $username = $data['username'];
+                              }
+                              if($_SESSION['ruolo'] == 2){
+                                echo "<tr>";
+                                echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['idx_sollevamento'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/modifica.png"></a></td>';
+                                echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/elimina.png"></a></td>';
+                                echo "</tr>";
+                              }
+                              elseif($_SESSION['ruolo'] == 1){
+                                if($ar['id_operatore'] == $_SESSION['id_utente']){
+                                  echo "<tr>";
+                                  echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['idx_sollevamento'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                  if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                  else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/modifica.png"></a></td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/elimina.png"></a></td>';
+                                  echo "</tr>";
+                                }
+                              }
+                              elseif($_SESSION['ruolo'] == 0){
+                                if($ar['cliente'] == $_SESSION['username']){
+                                  echo "<tr>";
+                                  echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['idx_sollevamento'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                  if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                  else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/modifica.png"></a></td>';
+                                  echo '<td class="border-dark text-dark"><a href=""><img height="25px" width="25px" src="./img/elimina.png"></a></td>';
+                                  echo "</tr>";
+                                }
+                              }
                           }
                         }
                     ?>
@@ -133,7 +176,7 @@ if(isset($_POST['cliente'])){
                         <label>Peso reale(kg)</label>
                         <input class="form-control my-2" type="number" name="peso" required>
                         <label>Altezza da terra delle mani all'inizio del sollevamento(cm)</label>
-                        <select class="form-control my-2" name="h_terra" id="h_terra" required>
+                        <select class="form-control my-2" name="h_terr" id="h_terr" required>
                           <option>0</option>
                           <option>25</option>
                           <option>50</option>
@@ -178,10 +221,22 @@ if(isset($_POST['cliente'])){
                           <option>Buono</option>
                           <option>Scarso</option>
                         </select>
-                        <label>Peso massimo consentito</label>
-                        <input class="form-control my-2" type="number" name="peso_max" required>
                         <label>Frequenza dei gesti</label>
-                        <input class="form-control my-2" type="number" name="frequenza" required>
+                        <select class="form-control my-2" name="frequenza" id="disl_angolare" required>
+                          <option>0</option>
+                          <option>30</option>
+                          <option>60</option>
+                          <option>90</option>
+                          <option>120</option>
+                          <option>135</option>
+                          <option>>135</option>
+                        </select>
+                        <label>Durata</label>
+                        <select class="form-control my-2" name="durata" id="disl_angolare" required>
+                          <option>< 1 ora</option>
+                          <option>da 1 a 2 ore</option>
+                          <option>da 2 a 8 ore</option>
+                        </select>
                         <label>Prezzo(€)</label>
                         <input class="form-control my-2" type="number" name="prezzo" required>
                     </div>
@@ -193,13 +248,13 @@ if(isset($_POST['cliente'])){
                   </div>
                 </div>
               </div>
-              </div>
+              </div>  
               <div class="div_add">
               <div class="modal fade" id="add_user" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuova valutazione</h1>
+                      <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuovo Utente</h1>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form class="form_create" action="dashboard.php" method="POST">
@@ -213,15 +268,14 @@ if(isset($_POST['cliente'])){
                         <label>Password</label>
                         <input class="form-control my-2" type="text" name="password" required>
                         <label>Ruolo</label>
-                        <select class="form-control my-2" name="ruolo" id="ruolo" required>
+                        <select class="form-control my-2" name="ruolo_ut" id="ruolo" required>
                           <option>Lettura</option>
                           <option>Lettura e scrittura</option>
                         </select>
-                        
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                      <button type="submyt" class="btn btn-primary">Send</button>
+                      <button type="submit" class="btn btn-primary">Send</button>
                     </div>
                     </form>
                   </div>
