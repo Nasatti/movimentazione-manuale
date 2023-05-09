@@ -11,7 +11,7 @@ switch($_POST['durata']){
         $h=1;
         break;
     case 'da 1 a 2 ore':
-        $h=1.5;
+        $h=2;
         break;
     case 'da 2 a 8 ore':
         $h=3;
@@ -39,6 +39,9 @@ switch($h_terr){
     case 150:
         $a=0.78;
         break;
+    case ">175":
+        $a=0;
+        break;
 }
 switch($dist_verticale){
     case 25:
@@ -54,13 +57,16 @@ switch($dist_verticale){
         $b=0.91;
         break;
     case 70:
-        $b=0.87;
+        $b=0.88;
         break;
     case 100:
         $b=0.87;
         break;
     case 150:
         $b=0.86;
+        break;
+    case ">175":
+        $a=0;
         break;
 }
 switch($dist_orizzontale){
@@ -82,6 +88,9 @@ switch($dist_orizzontale){
     case 60:
         $c=0.42;
         break;
+    case ">63":
+        $a=0;
+        break;
 }
 switch($disl_angolare){
     case 0:
@@ -102,6 +111,9 @@ switch($disl_angolare){
     case 135:
         $d=0.57;
         break;
+    case ">135":
+        $a=0;
+        break;
 }
 switch($giudizio){
     case "Buono":
@@ -112,7 +124,7 @@ switch($giudizio){
         break;
 }
 if($h = 1){
-    switch($h_terr){
+    switch($freq){
         case 0.20:
             $f=1;
             break;
@@ -131,10 +143,13 @@ if($h = 1){
         case 12:
             $f=0.37;
             break;
+        case ">15":
+            $f=0;
+            break;
     }
 }
 elseif($h = 2){
-    switch($h_terr){
+    switch($freq){
         case 0.20:
             $f=0.95;
             break;
@@ -153,10 +168,13 @@ elseif($h = 2){
         case 12:
             $f=0.21;
             break;
+        case ">15":
+            $f=0;
+            break;
     }
 }
-elseif($h = 8){
-    switch($h_terr){
+elseif($h = 3){
+    switch($freq){
         case 0.20:
             $f=0.85;
             break;
@@ -172,12 +190,23 @@ elseif($h = 8){
         case 9:
             $f=0.12;
             break;
+        case 12:
+            $f=0.08;
+            break;
+        case ">15":
+            $f=0;
+            break;
     }
 }
-    $ps=$cp*$a*$b*$c*$d*$e*$f;
+$ps=$cp*$a*$b*$c*$d*$e*$f;
+if($ps>0){
     $idx = $_POST['peso']/$ps;
     //$ps=$_POST['peso']/$_POST['peso_max'];
-    $sql = "INSERT INTO valutazione (id_operatore, cliente, data, h_terra, dist_verticale, dist_orizzontale, disl_angolare, giudizio, peso, frequenza, prezzo, peso_max, idx_sollevamento) VALUES ('".$_SESSION['id_utente']."','".$_POST['cliente']."','".$_POST['data']."','".$_POST['h_terra']."','".$_POST['dist_verticale']."','".$_POST['dist_orizzontale']."','".$_POST['disl_angolare']."','".$_POST['giudizio']."','".$_POST['peso']."','".$_POST['frequenza']."','".$_POST['prezzo']."','".$ps."','".$idx."')";
+    $sql = "INSERT INTO valutazione (id_operatore, cliente, data, h_terra, dist_verticale, dist_orizzontale, disl_angolare, giudizio, peso, frequenza, prezzo, peso_max, idx_sollevamento, valido) VALUES ('".$_SESSION['id_utente']."','".$_POST['cliente']."','".$_POST['data']."','".$_POST['h_terr']."','".$_POST['dist_verticale']."','".$_POST['dist_orizzontale']."','".$_POST['disl_angolare']."','".$_POST['giudizio']."','".$_POST['peso']."','".$_POST['frequenza']."','".$_POST['prezzo']."','".$ps."','".$idx."', 1)";
     if ($connection->query($sql)) echo "<script>alert('valutazione aggiunto!')</script>";
-    else echo "<script>alert('Operazione non riuscita!')</script>";
+    else echo "<script>alert('Operazione non riuscita!Riprova')</script>";
+}
+else{
+    echo "<script>alert('Operazione non riuscita!Controllare i dati')</script>";
+}
 ?>
