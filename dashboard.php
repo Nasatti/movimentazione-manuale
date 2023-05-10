@@ -1,21 +1,7 @@
-<?php 
+<?php
 session_start();
 include("connection.php");
-if(!isset($_SESSION['username'])) header("Location: index.php?error=accesso");
-if(isset($_POST['nome'])){
-  if($_POST['ruolo_ut']=="Lettura") $ruolo=0;
-  else $ruolo=1;
-  $sql = "INSERT INTO credenziali (nome, cognome, username, password, ruolo) VALUES ('".$_POST['nome']."','".$_POST['cognome']."','".$_POST['username']."','".hash("sha512",$_POST['password'],false)."','".$ruolo."')";
-  if ($connection->query($sql)) echo "<script>alert('Utente aggiunto!')</script>";
-  else echo "<script>alert('Operazione non riuscita!')</script>";
-}
-if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){ 
-  $_SESSION['cliente']=$_POST['cliente'];
-  require("add_valutazione.php");
-  $aggiungi=false;
-}
 ?>
-
 <!DOCTYPE html>
 <html>
     <head>
@@ -179,7 +165,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
                       <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuova valutazione</h1>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="form_create" action="dashboard.php" method="POST">
+                    <form class="form_create" action="add.php" method="POST">
                     <div class="modal-body">
                         <label>Ragione sociale</label>
                         <input class="form-control my-2" type="text" name="cliente" required>
@@ -254,7 +240,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                      <button type="submyt" class="btn btn-primary">Send</button>
+                      <input type="submit" class="btn btn-primary" value="Send">
                     </div>
                     </form>
                   </div>
@@ -269,7 +255,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
                       <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuovo Utente</h1>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="form_create" action="dashboard.php" method="POST">
+                    <form class="form_create" action="add_user.php" method="POST">
                     <div class="modal-body">
                         <label>Nome</label>
                         <input class="form-control my-2" type="text" name="nome" required>
@@ -304,8 +290,9 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>      
               </div>      
               <div class="modal-body">                    
-                <form class="form_create" action="" method="POST">
+                <form class="form_create" action="modifica.php" method="POST">
                   <div class="modal-body">
+                    <input name='id' id="id_c" hidden value="">
                         <label>Ragione sociale</label>    
                         <input class="form-control my-2" type="text" name="cliente"  id="cliente" value="aa" required>    
                         <label>Data di emissione</label>    
@@ -378,7 +365,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
                           </div>
                           <div class="modal-footer">  
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                              <button type="submyt" class="btn btn-primary">Send</button>
+                              <button type="submit" class="btn btn-primary" onclick="Modifica()">Send</button>
                             </div>
                           </form>
                         </div>    
@@ -394,6 +381,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
               dataType: "json",
               success: function(data){
                 var dati = data
+                $("#id_c").val(mod_id);
                 $("#cliente").val(dati['cliente']);
                 $("#data").val(dati['data']);
                 $("#peso").val(dati['peso']);
@@ -411,23 +399,6 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
               }
             })
           }
-          function Modifica(){
-            console.log("AAAA")
-            $.ajax({
-              url: "modifica.php",
-              data: {id: mod_id},
-              type: "POST",
-              success: function(data){
-                console.log(data)
-                alert(data)
-                location.reload()
-              },
-              error: function(data){
-                alert("Errore!")
-                console.log(data)
-              }
-            })
-          }
           function Elimina(){
             console.log(mod_id)
             $.ajax({
@@ -437,6 +408,7 @@ if(isset($_POST['cliente']) && $_POST['cliente'] != $_SESSION['cliente']){
 
               success: function(data){
                 alert(data)
+                <?php $_SESSION['add']=0; ?>
                 location.reload()
               },
               error: function(data){
