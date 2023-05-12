@@ -59,15 +59,18 @@ include("connection.php");
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Autore</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Ragione sociale</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Data</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso realmente sollevato</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso limite raccomandato</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso realmente sollevato(kg)</th>
+                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Peso limite raccomandato(kg)</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Indice sollevamento</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Prezzo</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">PDF</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Validità</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Modifica</th>
-                    <th class="border-dark text-dark" style="background-color:#BCD2FF">Elimina</th>
-
+                    <?php
+                    if($_SESSION['ruolo'] != 0){
+                    echo'<th class="border-dark text-dark" style="background-color:#BCD2FF">Modifica</th>';
+                    echo'<th class="border-dark text-dark" style="background-color:#BCD2FF">Elimina</th>';
+                    }
+                    ?>
                   </tr>
                     <?php
                     $sql = "SELECT id, id_operatore, cliente, data, peso, prezzo, idx_sollevamento, peso_max, valido FROM valutazione";
@@ -95,11 +98,13 @@ include("connection.php");
                                 echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
                                 echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
                                 echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                                if($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                elseif($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
                                 elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
                                 elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
                                 echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
                                 if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
                                 else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
@@ -115,10 +120,13 @@ include("connection.php");
                                   echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
                                   echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
                                   echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                                  if($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
-                                  elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
-                                  elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                  if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                  if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  elseif($ar['idx_sollevamento'] > 0.99 && $ar['idx_sollevamento'] == -1)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';  
+                                  elseif($ar['idx_sollevamento'] > 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
+                                  elseif($ar['idx_sollevamento'] <= 0.85 )echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
                                   echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
                                   if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
                                   else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
@@ -135,15 +143,16 @@ include("connection.php");
                                   echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
                                   echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
                                   echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                                  if($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                  if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                  if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  elseif($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
                                   elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
-                                  elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'</td>';
+                                  elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
                                   echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
                                   if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
                                   else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
-                                  echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
-                                  echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
                                   echo "</tr>";
                                 }
                               }
@@ -197,12 +206,12 @@ include("connection.php");
                         <label>Distanza orizzontale tra mani e punto di mezzo delle caviglie(cm)</label>
                         <select class="form-control my-2" name="dist_orizzontale" id="dist_orizzontale" required>
                           <option>25</option>
+                          <option>30</option>
+                          <option>40</option>
                           <option>50</option>
-                          <option>75</option>
-                          <option>100</option>
-                          <option>125</option>
-                          <option>150</option>
-                          <option>>175</option>
+                          <option>55</option>
+                          <option>60</option>
+                          <option>>63</option>
                         </select>
                         <label>Dislocazione angolare del peso in gradi(°)</label>
                         <select class="form-control my-2" name="disl_angolare" id="disl_angolare" required>

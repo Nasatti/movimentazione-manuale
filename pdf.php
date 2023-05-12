@@ -76,17 +76,19 @@ for($row = 0; $row < $max_rows; $row++){
 }
 $pdf->Ln();
 $idx=explode(' ', $descrizioni[9]);
-if ($idx[2] <= 0.85) {
+if($idx[2] == -1){
+    $pdf->SetFillColor(204, 51, 0);
+    $pdf->Cell(190, 20, "Impossibile calcolare l'indice, il peso massimo risulta uguale a 0 kg", 1, 1, 'C', true);
+} else if ($idx[2] <= 0.85) {
     $pdf->SetFillColor(0, 204, 1);
     $pdf->Cell(190, 20, "Situazione accettabile", 1, 1, 'C', true);
 } else if ($idx[2] <= 0.99) {
     $pdf->SetFillColor(255, 153, 0);
-    $pdf->Cell(190, 20, "E' necessario attivare la sorveglianza sanitaria e la formazione e informazione del personale", 1, 1, 'C', true);
+    $pdf->Cell(190, 20, "Attenzione! Attivare la sorveglianza sanitaria formazione e informazione del personale", 1, 1, 'C', true);
 } else {
     $pdf->SetFillColor(204, 51, 0);
-    $pdf->Cell(190, 20, "E' necessario attivare interventi di prevenzione, la sorveglianza sanitaria annuale", 1, 1, 'C', true);
+    $pdf->Cell(190, 20, "Rischio! Eseguire interventi di prevenzione e attivare sorveglianza sanitaria annuale", 1, 1, 'C', true);
 }
-        $pdf->Output();
-
+$pdf->Output();
 }
 ?>

@@ -202,5 +202,8 @@ $ps=$cp*$a*$b*$c*$d*$e*$f;
 if($ps>0){
     include('connection.php');
     $idx = $_POST['peso']/$ps;
+}else{
+    $ps = -1;
+    $idx = -1;
 }
 ?>
