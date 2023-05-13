@@ -8,6 +8,7 @@ include("connection.php");
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
         <link rel="stylesheet" href="styles.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         <title>Dashboard</title>
@@ -19,12 +20,13 @@ include("connection.php");
         <div class="contenitore">
             <div class="left">
               <button type="button" class="btn btn-primary" style="border:none; background:transparent;color:black" data-bs-toggle="modal" data-bs-target="#exampleModal"><h4><?php echo $_SESSION["nome"]." ".$_SESSION["cognome"] ?></h4></button>
+              <button type="button" data-bs-toggle="modal" data-bs-target="#info_modal" style="font-size:20px;background-color:transparent;border:0px">ℹ️</button>
               <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
                       <h1 class="modal-title fs-5" id="exampleModalLabel"><?php echo $_SESSION["nome"]." ".$_SESSION["cognome"] ?></h1>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>
                     </div>
                     <div class="modal-body">
                       <?php
@@ -47,13 +49,15 @@ include("connection.php");
                 if($_SESSION['ruolo'] =="1" || $_SESSION['ruolo'] =="2"){
                   if($_SESSION['ruolo'] =="2")echo '<button id="view" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_user">Aggiungi utente</button>';
                   echo '<button id="create" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#create_modal">Nuova valutazione</button>';
+                  if(!isset($_POST['rag_soc'])) echo '<button id="search" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#search_modal">Cerca Ragione Sociale</button>';
+                  else echo '<a href="dashboard.php"><button id="search" class="btn btn-outline-primary" type="button">Visualizza valutazioni</button></a>';
                 }
                 ?>
                 <a href="index.php"><button type="button" class="btn btn-outline-danger">Logout</button></a>
             </div>
             <div class="body">
               <div id="div_view">
-                <table class="table-bordered border-dark text-center" style="width:100%">
+                <table class="table-bordered border-dark text-center" id="table" style="width:100%">
                   <tr>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">ID</th>
                     <th class="border-dark text-dark" style="background-color:#BCD2FF">Autore</th>
@@ -91,52 +95,8 @@ include("connection.php");
                                 $data = $result->fetch_array();
                                   $username = $data['username'];
                               }
-                              if($_SESSION['ruolo'] == 2){
-                                echo "<tr>";
-                                echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$username.'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                                if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
-                                else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                                if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
-                                elseif($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
-                                elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
-                                elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';
-                                echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
-                                echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
-                                if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
-                                else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
-                                echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
-                                echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
-                                echo "</tr>";
-                              }
-                              elseif($_SESSION['ruolo'] == 1){
-                                if($ar['id_operatore'] == $_SESSION['id_utente']){
-                                  echo "<tr>";
-                                  echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$username.'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
-                                  if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
-                                  else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
-                                  if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
-                                  elseif($ar['idx_sollevamento'] > 0.99 && $ar['idx_sollevamento'] == -1)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';  
-                                  elseif($ar['idx_sollevamento'] > 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
-                                  elseif($ar['idx_sollevamento'] <= 0.85 )echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
-                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
-                                  echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
-                                  if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
-                                  else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
-                                  echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
-                                  echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
-                                  echo "</tr>";
-                                }
-                              }
-                              elseif($_SESSION['ruolo'] == 0){
-                                if($ar['cliente'] == $_SESSION['username']){
+                              if(isset($_POST['rag_soc'])){
+                                if($ar['cliente'] == $_POST['rag_soc']){
                                   echo "<tr>";
                                   echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
                                   echo '<td class="border-dark text-dark">'.$username.'</td>';
@@ -153,13 +113,82 @@ include("connection.php");
                                   echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
                                   if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
                                   else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                  echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
+                                  echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
                                   echo "</tr>";
                                 }
                               }
-                              array_push($ar_id, $ar['id']);
-                              echo "<script>document.getElementById('Modifica$i').onclick = function () {  mod_id =".$ar_id[$i].";Compila_modifica()};</script>";
-                              echo "<script>document.getElementById('Elimina$i').onclick = function () {  mod_id =".$ar_id[$i].";Elimina()};</script>";
-                              $i++;
+                              else{
+                                if($_SESSION['ruolo'] == 2){
+                                  echo "<tr>";
+                                  echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                  if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                  if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                  elseif($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                  elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
+                                  elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';
+                                  echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
+                                  echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                  if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                  else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                  echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
+                                  echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
+                                  echo "</tr>";
+                                }
+                                elseif($_SESSION['ruolo'] == 1){
+                                  if($ar['id_operatore'] == $_SESSION['id_utente']){
+                                    echo "<tr>";
+                                    echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                    if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                    else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                    if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                    elseif($ar['idx_sollevamento'] > 0.99 && $ar['idx_sollevamento'] == -1)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';  
+                                    elseif($ar['idx_sollevamento'] > 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
+                                    elseif($ar['idx_sollevamento'] <= 0.85 )echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
+                                    echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                    if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                    else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                    echo '<td class="border-dark text-dark"><button id="Modifica'.$i.'" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/modifica.png"></button></td>';
+                                    echo '<td class="border-dark text-dark"><button id="Elimina'.$i.'" style="border:none;background-color:transparent"><img height="25px" width="25px" src="./img/elimina.png"></button></td>';
+                                    echo "</tr>";
+                                  }
+                                }
+                                elseif($_SESSION['ruolo'] == 0){
+                                  if($ar['cliente'] == $_SESSION['username']){
+                                    echo "<tr>";
+                                    echo '<td class="border-dark text-dark">'.$ar['id'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$username.'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['cliente'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['data'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['peso'].'</td>';
+                                    if($ar['peso_max'] == -1) echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                    else echo '<td class="border-dark text-dark">'.$ar['peso_max'].'</td>';
+                                    if($ar['idx_sollevamento'] == -1)echo '<td class="border-dark text-dark" style="color:red">Non calcolabile</td>';
+                                    elseif($ar['idx_sollevamento']<= 0.85)echo '<td class="border-dark" style="color:green">'.$ar['idx_sollevamento'].'</td>';
+                                    elseif($ar['idx_sollevamento']> 0.85 && $ar['idx_sollevamento']<= 0.99)echo '<td class="border-dark" style="color:#e3b007">'.$ar['idx_sollevamento'].'</td>';
+                                    elseif($ar['idx_sollevamento']> 0.99)echo '<td class="border-dark" style="color:red">'.$ar['idx_sollevamento'].'</td>';
+                                    echo '<td class="border-dark text-dark">'.$ar['prezzo'].'€</td>';
+                                    echo '<td class="border-dark text-dark"><a href="pdf.php?id='.$ar['id'].'"><img height="25px" width="25px" src="./img/pdf.png"></a></td>';
+                                    if($ar['valido']) echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/valido.png"></td>';
+                                    else echo '<td class="border-dark text-dark"><img height="25px" width="25px" src="./img/non_valido.png"></td>';
+                                    echo "</tr>";
+                                  }
+                                }
+                                array_push($ar_id, $ar['id']);
+                                echo "<script>document.getElementById('Modifica$i').onclick = function () {  mod_id =".$ar_id[$i].";Compila_modifica()};</script>";
+                                echo "<script>document.getElementById('Elimina$i').onclick = function () {  mod_id =".$ar_id[$i].";Elimina()};</script>";
+                                $i++;
+                              }
                             }
 
                         }
@@ -172,7 +201,7 @@ include("connection.php");
                   <div class="modal-content">
                     <div class="modal-header">
                       <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuova valutazione</h1>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>
                     </div>
                     <form class="form_create" action="add.php" method="POST">
                     <div class="modal-body">
@@ -262,7 +291,7 @@ include("connection.php");
                   <div class="modal-content">
                     <div class="modal-header">
                       <h1 class="modal-title fs-5 text-center" id="staticBackdropLabel">Nuovo Utente</h1>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>
                     </div>
                     <form class="form_create" action="add_user.php" method="POST">
                     <div class="modal-body">
@@ -296,7 +325,7 @@ include("connection.php");
             <div class="modal-content">      
               <div class="modal-header">        
                 <h1 class="modal-title fs-5" id="staticBackdropLabel">Modifica</h1>        
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>      
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>      
               </div>      
               <div class="modal-body">                    
                 <form class="form_create" action="modifica.php" method="POST">
@@ -374,13 +403,53 @@ include("connection.php");
                           </div>
                           <div class="modal-footer">  
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                              <button type="submit" class="btn btn-primary" onclick="Modifica()">Send</button>
+                              <button type="submit" class="btn btn-primary">Send</button>
                             </div>
                           </form>
                         </div>    
                       </div>  
                     </div>
       </div>
+       <div class="modal fade" id="search_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Ricerca🔍</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>
+            </div>
+            <form action="dashboard.php" method="POST">
+            <div class="modal-body">
+              
+                  <label>Inserisci le Ragione Sociale che vuole cercare</label>
+                  <input type="text" name="rag_soc">
+              
+            </div>
+            <div class="modal-footer"> 
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Search">
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="info_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Informazioni</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color:transparent;border:0px">❌</button>
+              </div>
+              <div class="modal-body text-center">
+                In questa piattafoma è possibile visualizzare,  inserire e cercare i dati relativi alla <b>movimentazione manuale dei carichi</b>, 
+                che possono essere accettabili o meno in base all'indice di sollevamento calcolato tramite i dati inseriti.
+                Per avere la valutazione finale è sufficiente scaricare il pdf!
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <script>
           function Compila_modifica(){
             $.ajax({
@@ -422,6 +491,22 @@ include("connection.php");
               },
               error: function(data){
                 alert("Errore!")
+              }
+            })
+          }
+          function Search(){
+            var rag_soc = $("#ricerca_Ragione").val()
+            $.ajax({
+              url: "search.php",
+              data: {rag_soc: rag_soc},
+              type: "POST",
+              dataType: "json",
+              success: function(data){
+                var dati = data
+                $("#table").innerhtml = ""
+              },
+              error: function(data){
+                console.log(data)
               }
             })
           }
